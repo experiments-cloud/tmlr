@@ -13,35 +13,35 @@ from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
 
 # ==========================================
-# Configuración de Hiperparámetros del Dataset
+# Dataset Hyperparameter Configuration
 # ==========================================
-TRAIN_SAMPLES = 100000  # Subconjunto de entrenamiento
-VAL_SAMPLES = 5000      # Subconjunto de validación
-MAX_LENGTH = 64         # Longitud de contexto estricta para controlar RAM en HVP
-BATCH_SIZE = 128        # Ajustable según tu GPU
+TRAIN_SAMPLES = 100000  # Training subset limit
+VAL_SAMPLES = 5000      # Validation subset limit
+MAX_LENGTH = 64         # Strict context length to bound spatial memory during HVP extraction
+BATCH_SIZE = 128        # Configurable based on available VRAM capacity
 
-print("1. Descargando el dataset TinyStories...")
-# Descargamos el dataset completo desde Hugging Face
+print("1. Downloading the TinyStories dataset...")
+# Download the full natural language corpus from Hugging Face
 dataset = load_dataset("roneneldan/TinyStories")
 
-# Seleccionamos los subconjuntos para no entrenar durante días
+# Select subsets to bound the total computational overhead
 train_subset = dataset["train"].select(range(TRAIN_SAMPLES))
 val_subset = dataset["validation"].select(range(VAL_SAMPLES))
 
-print(f"Dataset cargado: {len(train_subset)} train, {len(val_subset)} val.")
+print(f"Dataset loaded: {len(train_subset)} training samples, {len(val_subset)} validation samples.")
 
-print("2. Configurando el Tokenizador...")
-# Usamos el tokenizador de GPT-2 (BPE) por su vocabulario eficiente (~50k tokens)
-# Es un estándar en la literatura y evita tener que entrenar uno desde cero.
+print("2. Configuring the Tokenizer...")
+# Utilize the GPT-2 tokenizer (BPE) for its efficient vocabulary distribution (~50k tokens)
+# This is standard in the literature, bypassing the need to train a custom tokenizer from scratch.
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
-tokenizer.pad_token = tokenizer.eos_token # GPT-2 no tiene pad_token por defecto
+tokenizer.pad_token = tokenizer.eos_token # GPT-2 lacks a default padding token
 
 # ==========================================
-# Función de Tokenización
+# Tokenization Function
 # ==========================================
 def tokenize_function(examples):
-    # Truncamos y rellenamos a MAX_LENGTH para tener tensores uniformes
-    # Esto es crucial para estabilizar el cálculo del eigenvalor dominante
+    # Truncate and pad to MAX_LENGTH to ensure strictly uniform tensors
+    # This is analytically crucial to stabilize the computation of the dominant eigenvalue
     tokens = tokenizer(
         examples["text"], 
         padding="max_length", 
@@ -50,28 +50,27 @@ def tokenize_function(examples):
         return_tensors="pt"
     )
     
-    # En modelado autorregresivo (Causal LM), los labels son los mismos input_ids
-    # El modelo se encargará de hacer el shift (desplazamiento) internamente o 
-    # en la función de pérdida.
+    # Under an autoregressive modeling paradigm (Causal LM), the targets match the input_ids
+    # The architecture will internally handle the right-shift operation during the loss computation.
     tokens["labels"] = tokens["input_ids"].clone()
     return tokens
 
-print("3. Aplicando tokenización (esto puede tomar un momento)...")
-# Mapeamos la función sobre los datasets
+print("3. Applying tokenization protocol (this may take a moment)...")
+# Map the tokenization function across the dataset splits
 tokenized_train = train_subset.map(tokenize_function, batched=True, remove_columns=["text"])
 tokenized_val = val_subset.map(tokenize_function, batched=True, remove_columns=["text"])
 
-# Convertimos a formato PyTorch
+# Convert to native PyTorch tensors
 tokenized_train.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
 tokenized_val.set_format(type="torch", columns=["input_ids", "attention_mask", "labels"])
 
-print("4. Creando PyTorch DataLoaders...")
-# Dataloaders listos para el ciclo de entrenamiento
+print("4. Instantiating PyTorch DataLoaders...")
+# DataLoaders prepared for the optimization horizon
 train_dataloader = DataLoader(tokenized_train, batch_size=BATCH_SIZE, shuffle=True)
 val_dataloader = DataLoader(tokenized_val, batch_size=BATCH_SIZE, shuffle=False)
 
-print("¡Paso 1 Completado! Datos listos para el Transformer.")
+print("Step 1 Complete! Data tensors strictly formatted for the Transformer architecture.")
 
-# Comprobación rápida de las dimensiones del tensor
+# Analytical verification of tensor dimensions
 sample_batch = next(iter(train_dataloader))
-print(f"Forma de input_ids: {sample_batch['input_ids'].shape}") # Debería ser [128, 64]
+print(f"Shape of input_ids tensor: {sample_batch['input_ids'].shape}") # Expected baseline: [128, 64]
