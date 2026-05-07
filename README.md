@@ -39,6 +39,7 @@ To successfully bypass fused hardware kernels and guarantee mathematically exact
 
 ```bash
 pip install -r requirements.txt
+```
 
 ## 🚀 Execution Guide
 
