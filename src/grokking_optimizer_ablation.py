@@ -1,10 +1,11 @@
 """
 grokking_optimizer_ablation.py
 
-Executes an optimizer ablation study comparing AdamW, standard Adam, and SGD.
-Evaluates the training and spectral dynamics to empirically demonstrate that 
-the geometric pressure from decoupled weight decay is a strictly necessary 
-condition to traverse the topological barrier and induce grokking.
+Executes a topological ablation study comparing the decoupled AdamW operator 
+against standard coupled optimizers (Adam, SGD). Evaluates the continuous 
+macroscopic and spectral dynamics to analytically demonstrate that the geometric 
+pressure from decoupled weight decay is a strictly necessary boundary condition 
+to traverse the topological barrier and induce algorithmic consolidation.
 """
 
 import torch
@@ -14,23 +15,23 @@ import matplotlib.pyplot as plt
 import itertools
 
 # ==========================================
-# 1. GENERACIÓN DEL DATASET ALGORÍTMICO
+# 1. ALGORITHMIC DATASET GENERATION
 # ==========================================
 class ModularAdditionDataset(Dataset):
     def __init__(self, p=97, split='train', train_ratio=0.5, seed=42):
         """
-        Dataset de aritmética modular a + b = c (mod p).
-        Vocabulario (0 a p-1) para enteros, p para '+', p+1 para '='.
+        Discrete modular arithmetic dataset a + b = c (mod p).
+        Vocabulary (0 to p-1) for integers, p for '+', p+1 for '='.
         """
         self.p = p
-        torch.manual_seed(seed) # Mantenemos la semilla estática para control
+        torch.manual_seed(seed) # Maintain static seed for rigorous topological control
         
-        # Generar universo de ecuaciones (p^2)
+        # Generate the complete optimization manifold of equations (p^2)
         all_pairs = torch.cartesian_prod(torch.arange(p), torch.arange(p))
         indices = torch.randperm(len(all_pairs))
         all_pairs = all_pairs[indices]
         
-        # Split 50/50
+        # Orthogonal 50/50 structural split
         split_idx = int(len(all_pairs) * train_ratio)
         self.data = all_pairs[:split_idx] if split == 'train' else all_pairs[split_idx:]
         
@@ -43,81 +44,83 @@ class ModularAdditionDataset(Dataset):
     def __getitem__(self, idx):
         a, b = self.data[idx]
         c = (a + b) % self.p
-        # Tensor X: [a, +, b, =]
+        # Input Tensor X: [a, +, b, =]
         x = torch.tensor([a, self.plus_token, b, self.eq_token], dtype=torch.long)
-        # Tensor Y (Shifted target): [+, b, =, c]
+        # Shifted Target Tensor Y: [+, b, =, c]
         y = torch.tensor([self.plus_token, b, self.eq_token, c], dtype=torch.long)
         return x, y
 
 # ==========================================
-# 2. ARQUITECTURA TRANSFORMER CAUSAL
+# 2. CAUSAL TRANSFORMER ARCHITECTURE
 # ==========================================
 class SmallCausalTransformer(nn.Module):
     def __init__(self, vocab_size=100, d_model=128, n_heads=4, n_layers=2, d_ff=512):
         """
-        Transformer configurado con N ~ 422,000 parámetros y Pre-LN.
+        Transformer architecture configured with N ~ 422,000 parameters and Pre-LN.
         """
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, d_model)
-        self.pos_encoding = nn.Parameter(torch.zeros(1, 4, d_model)) # seq_len = L = 4
+        self.pos_encoding = nn.Parameter(torch.zeros(1, 4, d_model)) # Sequence length bounded to L = 4
         
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model, 
             nhead=n_heads, 
             dim_feedforward=d_ff,
-            norm_first=True, # Pre-LN configuración
+            norm_first=True, # Pre-LN configuration to explicitly bound variance
             batch_first=True,
             activation='gelu'
         )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers)
         self.lm_head = nn.Linear(d_model, vocab_size)
         
-        # Inicialización Xavier Estricta
+        # Strict Xavier Topological Conditioning
         for p in self.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
     def forward(self, x):
         x = self.embedding(x) + self.pos_encoding
-        # Máscara causal triangular superior
+        # Explicit upper triangular causal mask to prevent acausal information leakage
         mask = nn.Transformer.generate_square_subsequent_mask(x.size(1)).to(x.device)
         out = self.transformer(x, mask=mask, is_causal=True)
         return self.lm_head(out)
 
 # ==========================================
-# 3. EXTRACCIÓN ESPECTRAL (HVP + POWER ITERATION)
+# 3. SPECTRAL EXTRACTION (HVP + POWER ITERATION)
 # ==========================================
 def compute_lambda_max(model, loss_fn, x, y, num_iterations=20):
     """
-    Aproximación iterativa de Lambda Max usando Productos Hessiano-Vector.
+    Iterative approximation of the dominant eigenvalue (\lambda_max) 
+    using Hessian-Vector Products.
     """
-    # Desactivar explícitamente kernels de atención fusionada (FlashAttention)
+    # Explicitly disable fused attention kernels (FlashAttention) 
+    # to unroll the exact computational graph for double backpropagation
     with torch.backends.cuda.sdp_kernel(enable_flash=False, enable_math=True, enable_mem_efficient=False):
         model.zero_grad()
         outputs = model(x)
         
-        # Evaluado exclusivamente en el último token de la secuencia
+        # Evaluated exclusively on the final sequence token
         loss = loss_fn(outputs[:, -1, :], y[:, -1]) 
         
         params = [p for p in model.parameters() if p.requires_grad]
         
-        # Primera derivada (Gradiente)
+        # First-order derivative (Gradient)
         grads = torch.autograd.grad(loss, params, create_graph=True)
         
-        # Inicializar vector aleatorio v0
+        # Initialize random vector v0
         v = [torch.randn_like(p) for p in params]
         v_norm = torch.sqrt(sum((x**2).sum() for x in v))
         v = [x / v_norm for x in v]
         
-        # Método de la potencia
+        # Power Iteration numerical method
         for _ in range(num_iterations):
             grad_v = sum((g * v_i).sum() for g, v_i in zip(grads, v))
-            hvp = torch.autograd.grad(grad_v, params, retain_graph=True) #
+            hvp = torch.autograd.grad(grad_v, params, retain_graph=True)
             
             hvp_norm = torch.sqrt(sum((x**2).sum() for x in hvp))
-            v = [x / (hvp_norm + 1e-8) for x in hvp] # Prevenir overflow
+            v = [x / (hvp_norm + 1e-8) for x in hvp] # L2 Normalization to prevent numerical overflow
             
-        # Cociente de Rayleigh
+        # Rayleigh Quotient evaluation
         grad_v = sum((g * v_i).sum() for g, v_i in zip(grads, v))
         final_hvp = torch.autograd.grad(grad_v, params)
         lambda_max = sum((v_i * h_i).sum() for v_i, h_i in zip(v, final_hvp))
@@ -125,35 +128,35 @@ def compute_lambda_max(model, loss_fn, x, y, num_iterations=20):
         return lambda_max.item()
 
 # ==========================================
-# 4. BUCLE DE ENTRENAMIENTO PRINCIPAL
+# 4. PRIMARY OPTIMIZATION HORIZON
 # ==========================================
 def train_model(optimizer_name, device):
-    print(f"\n--- Iniciando Experimento: {optimizer_name} ---")
+    print(f"\n--- Initiating Topological Ablation: {optimizer_name} ---")
     
-    # Preparación de datos
+    # Data manifold preparation
     train_dataset = ModularAdditionDataset(split='train')
     val_dataset = ModularAdditionDataset(split='val')
-    # Batch size estático de B=256
+    # Static batch size of B=256
     train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False)
     
-    # Reiniciar semilla para asegurar inicialización idéntica de pesos
+    # Reset seed to guarantee strictly identical parametric initializations
     torch.manual_seed(42)
     model = SmallCausalTransformer().to(device)
     loss_fn = nn.CrossEntropyLoss()
     
-    # Selección del Optimizador
+    # Optimizer Selection (Coupled vs. Decoupled)
     lr = 1e-3
-    weight_decay = 1.0 # Catalizador del grokking
+    weight_decay = 1.0 # Topological catalyst for geometric compression
     
     if optimizer_name == "AdamW":
-        optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay, betas=(0.9, 0.98)) #
+        optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay, betas=(0.9, 0.98))
     elif optimizer_name == "Adam":
         optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay, betas=(0.9, 0.98))
     elif optimizer_name == "SGD":
         optimizer = torch.optim.SGD(model.parameters(), lr=lr, weight_decay=weight_decay, momentum=0.9)
 
-    steps = 25000 # Horizonte asintótico de entrenamiento
+    steps = 25000 # Extended asymptotic optimization horizon
     eval_interval = 500
     
     history = {'step': [], 'lambda_max': [], 'val_acc': []}
@@ -175,9 +178,9 @@ def train_model(optimizer_name, device):
         loss.backward()
         optimizer.step()
         
-        # Evaluación periódica (Monitoreo Activo)
+        # Periodic Spectral Evaluation (Active Topological Monitoring)
         if step % eval_interval == 0 or step == 1:
-            # 1. Calcular Accuracy
+            # 1. Compute Predictive Accuracy
             model.eval()
             correct, total = 0, 0
             with torch.no_grad():
@@ -189,23 +192,23 @@ def train_model(optimizer_name, device):
                     total += vy.size(0)
             val_acc = correct / total
             
-            # 2. Calcular Lambda Max
-            model.train() # Requiere requires_grad=True
+            # 2. Extract Dominant Eigenvalue (\lambda_max)
+            model.train() # Requires active gradient graph
             l_max = compute_lambda_max(model, loss_fn, x, y)
             
             history['step'].append(step)
             history['val_acc'].append(val_acc)
             history['lambda_max'].append(l_max)
-            print(f"Paso {step:05d} | Val Acc: {val_acc:.4f} | Lambda_Max: {l_max:.2f}")
+            print(f"Step {step:05d} | Val Acc: {val_acc:.4f} | Lambda_Max: {l_max:.2f}")
             
     return history
 
 # ==========================================
-# 5. EJECUCIÓN Y VISUALIZACIÓN DE RESULTADOS
+# 5. EXECUTION AND ANALYTICAL VISUALIZATION
 # ==========================================
 if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"Ejecutando en hardware: {device}")
+    print(f"Executing on hardware architecture: {device}")
     
     optimizers = ["AdamW", "Adam", "SGD"]
     results = {}
@@ -213,10 +216,10 @@ if __name__ == "__main__":
     for opt in optimizers:
         results[opt] = train_model(opt, device)
         
-    # Graficar y guardar figura para el Apéndice A
+    # Generate and save analytical figure for Appendix A
     plt.figure(figsize=(12, 8))
     
-    # Subplot 1: Precisión de Validación
+    # Subplot 1: Validation Accuracy Trajectory
     plt.subplot(2, 1, 1)
     for opt in optimizers:
         plt.plot(results[opt]['step'], results[opt]['val_acc'], label=f'{opt} (Val Acc)')
@@ -225,7 +228,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True, alpha=0.3)
     
-    # Subplot 2: Evolución Espectral (Hessian Lambda Max)
+    # Subplot 2: Spectral Evolution (Hessian Lambda Max)
     plt.subplot(2, 1, 2)
     for opt in optimizers:
         plt.plot(results[opt]['step'], results[opt]['lambda_max'], label=f'{opt} (\u03bb_max)', alpha=0.8)
@@ -237,4 +240,4 @@ if __name__ == "__main__":
     
     plt.tight_layout()
     plt.savefig('optimizer_ablation_results.png', dpi=300)
-    print("\nExperimento finalizado. Gráfica guardada como 'optimizer_ablation_results.png'.")
+    print("\nTopological ablation successfully concluded. Analytical figure saved as 'optimizer_ablation_results.png'.")
