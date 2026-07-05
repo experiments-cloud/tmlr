@@ -1,73 +1,139 @@
-# Spectral Dynamics of Delayed Algorithmic Generalization: A Hessian Topology Perspective
+# Reliability of Hessian Spectral Diagnostics in Grokking: A Multi-Seed Replication
 
-This repository contains the official PyTorch implementation and continuous telemetry required to reproduce the findings of our research on the topological phase transition underlying delayed algorithmic generalization. 
+This repository contains the code and raw experimental data supporting the paper
+submitted to Transactions on Machine Learning Research (TMLR). It accompanies a
+multi-seed replication and methodological re-examination of Hessian-based spectral
+diagnostics (dominant eigenvalue, trace, and eigenvalue density) applied to delayed
+generalization ("grokking") on a modular-addition task.
 
-By shifting the analytical framework to the continuous spectral domain of second-order directional derivatives, this work demonstrates that delayed generalization is not a stochastic anomaly, but a predictable geometric migration driven by the continuous pressure of decoupled weight decay, forcing the architecture to transition from a structurally fragile memorization state to an optimized algorithmic basin.
+**Note for reviewers:** this repository is anonymized for double-blind review. No
+author names, institutional affiliations, or identifying information appear anywhere
+in the code, comments, or commit history.
 
-## 📌 Repository Structure
+---
 
-The codebase is strictly modularized to map directly to the methodological and analytical sections of the manuscript:
+## Repository structure
 
-### Core Algorithmic Topology (Discrete Domains)
-* **`generate_dataset.py`**: Generates the discrete modular arithmetic dataset $a+b \pmod p$ with deterministic orthogonal structural partitions. It includes configurable density ratios (50%, 25%, 10%) to formally replicate the topological ablation study on the structural limits of algorithmic consolidation.
-* **`model_architecture.py`**: Defines the mathematically bounded causal Transformer architecture (Pre-LN, 2 layers, ~422K parameters) exactly as specified in Table 1 of the manuscript.
-* **`train_and_grok.py`**: Executes the extended asymptotic optimization trajectory (25,000 steps) to induce the topological phase transition. Supports the active manipulation of decoupled weight decay to evaluate its role as a necessary catalyst for geometric circuit compression.
-* **`hessian_topology.py`**: **Core Analytical Script.** Iteratively extracts the dominant eigenvalue $\lambda_{max}$ of the Hessian operator across saved optimization states utilizing Power Iteration and Hessian-Vector Products (HVP). This bypasses $\mathcal{O}(N^2)$ memory bottlenecks, keeping spatial complexity strictly bounded to $\mathcal{O}(N)$.
-* **`grokking_optimizer_ablation.py`**: Optimization operator ablation study. Evaluates the continuous macroscopic and spectral dynamics across AdamW, standard Adam, and SGD to analytically prove that the directional geometric pressure from decoupled regularization is a strictly necessary boundary condition to traverse high-curvature penalty barriers.
-* **`visualize_paper.py`**: Reads the augmented JSON telemetry and generates the camera-ready, high-resolution 3-panel figure detailing the macroscopic optimization trajectory and continuous Hessian spectral dynamics.
+```
+.
+├── src/                          Core scripts: dataset, model, training, spectral extraction
+│   ├── generate_dataset.py           Modular-addition dataset (p=97, configurable train_ratio)
+│   ├── model_architecture.py         ~422K-parameter causal Transformer
+│   ├── train_and_grok.py             Training loop (parametrized by --seed, --train_ratio)
+│   ├── hessian_topology.py           lambda_max (power iteration) + trace (Hutchinson) extraction
+│   ├── measure_intrinsic_noise.py    Repeated-measurement diagnostic (Section 5.2)
+│   ├── spectral_density_slq.py       Stochastic Lanczos Quadrature (Section 5.3)
+│   ├── grokking_optimizer_ablation.py  AdamW vs. Adam vs. SGD ablation (Appendix A)
+│   ├── run_all_experiments.py        Orchestrator: 4 seeds x 3 data densities (12 runs)
+│   └── run_all_spectral_density.py   Orchestrator: SLQ across the 36-run grid
+│
+├── analysis/                     Figure-generation scripts (read data/, produce PDF+PNG)
+│   ├── generate_figure1_accuracy.py
+│   ├── generate_figure2_measurement_noise.py
+│   ├── generate_figure3_lambda_slq_distribution.py
+│   ├── generate_figure4_spectral_density_grid.py
+│   └── generate_figureA1_optimizer_ablation.py
+│
+├── data/                         Raw experimental outputs (JSON), as reported in the paper
+│   ├── telemetry/                    12 files: 4 seeds x 3 data densities (Table 3, Figure 1)
+│   ├── noise_diagnostics/            10 files: repeated-measurement diagnostic (Table 4, Figure 2)
+│   ├── spectral_density/             36 files: SLQ grid, 4 seeds x 3 densities x 3 phases (Table 5, Figures 3-4)
+│   └── optimizer_ablation/           1 file: AdamW/Adam/SGD comparison (Appendix A)
+│
+├── excluded_tinystories_experiment/   NOT used in the paper; see its own README.md
+│
+└── requirements.txt
+```
 
-### Validation on Natural Language Topologies (Continuous Domains)
-* **`tinystories_experiment/tinystories_data.py`**: Data pipeline. Handles the initialization and tokenization of the TinyStories natural language corpus utilizing the GPT-2 tokenizer. Enforces strict spatial sequence truncation to ensure VRAM stability during continuous HVP extraction.
-* **`tinystories_experiment/tinystories_model.py`**: Architecture definition. Scales the causal Transformer to 16M parameters. Crucially implements an explicit native Math-based attention mechanism (*unfused computational graph*) to guarantee the exact double backpropagation flow required to extract second-order functions.
-* **`tinystories_experiment/tinystories_hvp_train.py`**: Natural language topology extraction. Executes the optimization loop and periodically extracts the dominant eigenvalue ($\lambda_{max}$) to trace the geometric signature of algorithmic consolidation across non-discrete semantic spaces.
+---
 
-### Semantic Redundancy Ablation
-* **`tinystories_semantic_ablation/tinystories_data_ablated.py`**: Semantic collapse ablation. Intercepts the natural language corpus prior to tokenization, forcefully mapping synonymous structures (e.g., 'huge', 'giant', 'massive') to strict root tokens ('big'). This systematically strips the optimization manifold of its inherent syntactic flexibility.
-* **`tinystories_semantic_ablation/tinystories_hvp_ablated.py`**: Topology extraction on rigid domains. Extracts the continuous spectral trajectory during the optimization of the collapsed corpus, formally demonstrating that stripping semantic redundancy causally forces the architecture to traverse steeper curvature barriers, mirroring the severe topological turbulence of discrete arithmetic.
+## Reproducing the results from scratch
 
-## 📊 Precomputed Telemetry & Data
-
-For immediate reproducibility and analytical verification without requiring complete re-optimization, we provide the raw continuous experimental results in JSON format:
-
-* **`grokking_telemetry_with_hessian.json`**: Full macroscopic and spectral telemetry for the primary algorithmic transition, including the continuous Hessian $\lambda_{max}$ trajectory.
-* **`telemetry_25pct_nowd.json`** & **`telemetry_10pct_nowd.json`**: Continuous data for the structural boundaries ablation study, formally capturing the *topological dissociation* under moderate (25%) and severe (10%) data scarcity regimes.
-* **`telemetry_fast_learning.json`**: Trajectories for accelerated algorithmic consolidation under optimal, data-abundant regimes.
-
-## ⚙️ Requirements
-
-To successfully bypass fused hardware kernels and guarantee mathematically exact double backpropagation for the HVP computation, the following environment is recommended:
+### 1. Environment
 
 ```bash
+python3 -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## 🚀 Execution Guide
+GPU is not required; all experiments were run on CPU. A GPU (if `torch.cuda.is_available()`)
+is used automatically if present.
 
-Phase 1: Inducing Geometric Compression
-
-Execute the long-horizon optimization trajectory to force the architecture into the asymptotic regime. This script strictly controls data instantiation, model conditioning, and topological checkpointing.
-
-```bash
-
-python train_and_grok.py
-
-```
-(Note: To replicate the data scarcity ablation study detailing topological dissociation (Section 5.3), adjust the train_ratio hyperparameter within this script).
-
-Phase 2: Continuous Spectral Analysis (Hessian Topology)
-
-Iterate over the saved parametric states to extract the directional curvature, tracking the continuous evolution of $\lambda_{max}$ across the optimization manifold.
+### 2. Train the main experimental grid (12 runs)
 
 ```bash
-
-python hessian_topology.py
-
+cd src/
+python run_all_experiments.py            # ~8-9 hours on CPU; resumable if interrupted
+python run_all_experiments.py --dry_run  # to preview the run plan without executing
 ```
 
-Phase 3: Analytical Visualization
+This populates `checkpoints/<run_name>/` with model weights and produces
+`grokking_telemetry_<run_name>.json` per run (pre-Hessian). Running
+`hessian_topology.py` for each run name (also invoked automatically inside
+`run_all_experiments.py`) produces the final `..._with_hessian.json` files matching
+those already provided in `data/telemetry/`.
 
-Generate the camera-ready 3-panel figure illustrating the macroscopic cross-entropy trajectories, the delayed algorithmic consolidation, and the profound topological flattening.
+### 3. Run the measurement-noise diagnostic (Section 5.2)
+
+Requires the checkpoints from step 2. Example:
 
 ```bash
+python measure_intrinsic_noise.py \
+    --checkpoint checkpoints/ratio10_seed42/model_step_24500.pt \
+    --train_ratio 0.1 --seed 42 --repeats 10 --num_iterations 20
 
-python visualize_paper.py
+python measure_intrinsic_noise.py \
+    --checkpoint checkpoints/ratio10_seed42/model_step_24500.pt \
+    --train_ratio 0.1 --seed 42 --repeats 10 --num_iterations 100
+```
+
+### 4. Run the SLQ spectral density grid (Section 5.3)
+
+```bash
+python run_all_spectral_density.py            # ~30-40 min; resumable
+```
+
+### 5. Run the optimizer ablation (Appendix A)
+
+```bash
+python grokking_optimizer_ablation.py         # ~70-80 min, trains AdamW/Adam/SGD sequentially
+```
+
+### 6. Regenerate the figures from the data already in `data/`
+
+```bash
+cd ../analysis/
+python generate_figure1_accuracy.py --input_dir ../data/telemetry
+python generate_figure2_measurement_noise.py --input_dir ../data/noise_diagnostics
+python generate_figure3_lambda_slq_distribution.py --input_dir ../data/spectral_density
+python generate_figure4_spectral_density_grid.py --input_dir ../data/spectral_density
+python generate_figureA1_optimizer_ablation.py --input ../data/optimizer_ablation/optimizer_ablation_results.json
+```
+
+Each script writes both a `.png` and a `.pdf` version, and prints an explicit warning
+if any expected seed or checkpoint is missing from the input data, rather than
+silently proceeding with an incomplete grid.
+
+---
+
+## Data provenance and integrity notes
+
+- All numerical claims in the paper are computed directly from the JSON files in
+  `data/`; no reported number is manually transcribed or estimated from a figure.
+- The `data/noise_diagnostics/` files without `iters100` in their filename were
+  produced under the original 20-iteration power-iteration budget; those with
+  `iters100` are the corresponding re-test at a 100-iteration budget (Section 5.2,
+  Table 4).
+- The `excluded_tinystories_experiment/` folder documents a discarded experiment and
+  is not referenced by any figure or table; see its own `README.md`.
+
+## Requirements
+
+See `requirements.txt`. Core dependencies: `torch>=2.1.2`, `numpy`, `scipy`,
+`matplotlib`.
+
+## License
+
+Code and data are released under CC BY 4.0, consistent with TMLR's policy for
+accepted submissions.
