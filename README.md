@@ -132,8 +132,3 @@ silently proceeding with an incomplete grid.
 
 See `requirements.txt`. Core dependencies: `torch>=2.1.2`, `numpy`, `scipy`,
 `matplotlib`.
-
-## License
-
-Code and data are released under CC BY 4.0, consistent with TMLR's policy for
-accepted submissions.
