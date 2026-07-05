@@ -40,8 +40,6 @@ in the code, comments, or commit history.
 │   ├── spectral_density/             36 files: SLQ grid, 4 seeds x 3 densities x 3 phases (Table 5, Figures 3-4)
 │   └── optimizer_ablation/           1 file: AdamW/Adam/SGD comparison (Appendix A)
 │
-├── excluded_tinystories_experiment/   NOT used in the paper; see its own README.md
-│
 └── requirements.txt
 ```
 
