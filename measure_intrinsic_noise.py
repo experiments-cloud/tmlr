@@ -51,6 +51,10 @@ def main():
     parser.add_argument("--num_iterations", type=int, default=NUM_POWER_ITERATIONS,
                          help=f"Power iteration steps per measurement (paper/original default: {NUM_POWER_ITERATIONS}). "
                               f"Increase this (e.g. 100) to test whether more iterations reduce measurement noise/bimodal non-convergence.")
+    parser.add_argument("--fixed_batch", action="store_true",
+                         help="Draw ONE evaluation batch before the repeat loop and reuse it for all repeats, "
+                              "varying only the random power-iteration initialization vector v0 each time. "
+                              "Used to isolate initialization noise from mini-batch sampling noise (see Section 7 limitations).")
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -70,10 +74,24 @@ def main():
     lmax_results = []
     trace_results = []
 
+    # If --fixed_batch is set, draw ONE batch now and reuse it for every repeat below,
+    # so that the only remaining source of randomness across repeats is the power-iteration
+    # initialization vector v0 (drawn fresh inside get_dominant_eigenvalue each call).
+    fixed_x_batch, fixed_y_batch = None, None
+    if args.fixed_batch:
+        fixed_x_batch, fixed_y_batch = next(iter(train_loader))
+        fixed_x_batch, fixed_y_batch = fixed_x_batch.to(device), fixed_y_batch.to(device)
+        print("Mode: FIXED BATCH — isolating initialization-vector noise only.\n")
+    else:
+        print("Mode: FRESH BATCH each repeat — joint batch + initialization noise (default).\n")
+
     for i in range(args.repeats):
-        # Fresh random batch each repetition (same frozen weights, different sampled data)
-        x_batch, y_batch = next(iter(train_loader))
-        x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+        if args.fixed_batch:
+            x_batch, y_batch = fixed_x_batch, fixed_y_batch
+        else:
+            # Fresh random batch each repetition (same frozen weights, different sampled data)
+            x_batch, y_batch = next(iter(train_loader))
+            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
 
         # get_dominant_eigenvalue also draws a fresh random init vector v0 internally each call,
         # and fresh random Rademacher vectors for the trace estimator.
@@ -98,10 +116,12 @@ def main():
         "seed": args.seed,
         "repeats": args.repeats,
         "num_iterations": args.num_iterations,
+        "fixed_batch": args.fixed_batch,
         "lambda_max_samples": lmax_results,
         "trace_samples": trace_results,
     }
-    out_path = args.checkpoint.replace("/", "_").replace(".pt", "") + f"_iters{args.num_iterations}_noise_diagnostic.json"
+    batch_tag = "fixedbatch" if args.fixed_batch else "freshbatch"
+    out_path = args.checkpoint.replace("/", "_").replace(".pt", "") + f"_iters{args.num_iterations}_{batch_tag}_noise_diagnostic.json"
     with open(out_path, "w") as f:
         json.dump(out, f, indent=2)
     print(f"\nGuardado en: {out_path}")
