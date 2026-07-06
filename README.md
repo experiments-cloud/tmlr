@@ -30,10 +30,6 @@ condition. This revision adds:
    sampling is the dominant source of instability at most (though not all)
    of the checkpoints examined.
 
-An earlier natural-language (TinyStories) validation experiment was removed
-from this revision after a data-loading bug was discovered; see
-`experimental/README.md` for details.
-
 ## Repository structure
 
 ```
@@ -57,8 +53,6 @@ from this revision after a data-loading bug was discovered; see
 │   ├── generate_figure3_lambda_slq_distribution.py
 │   ├── generate_figure4_spectral_density_grid.py
 │   └── generate_figureA1_optimizer_ablation.py
-│
-├── experimental/                    # Retired TinyStories code; not used in the paper (see experimental/README.md)
 │
 ├── requirements.txt
 └── README_SETUP.md                  # Full installation and execution guide
