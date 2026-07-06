@@ -149,18 +149,18 @@ def compute_weight_l2_norm(model):
 # ==========================================
 # 4. PRIMARY OPTIMIZATION HORIZON
 # ==========================================
-def train_model(optimizer_name, device):
-    print(f"\n--- Initiating Topological Ablation: {optimizer_name} ---")
+def train_model(optimizer_name, device, seed=42):
+    print(f"\n--- Initiating Topological Ablation: {optimizer_name} (seed={seed}) ---")
     
     # Data manifold preparation
-    train_dataset = ModularAdditionDataset(split='train')
-    val_dataset = ModularAdditionDataset(split='val')
+    train_dataset = ModularAdditionDataset(split='train', seed=seed)
+    val_dataset = ModularAdditionDataset(split='val', seed=seed)
     # Static batch size of B=256
     train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False)
     
     # Reset seed to guarantee strictly identical parametric initializations
-    torch.manual_seed(42)
+    torch.manual_seed(seed)
     model = SmallCausalTransformer().to(device)
     loss_fn = nn.CrossEntropyLoss()
     
@@ -231,6 +231,11 @@ def train_model(optimizer_name, device):
 # ==========================================
 if __name__ == "__main__":
     import json
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--seed", type=int, default=42)
+    args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Executing on hardware architecture: {device}")
@@ -239,13 +244,14 @@ if __name__ == "__main__":
     results = {}
     
     for opt in optimizers:
-        results[opt] = train_model(opt, device)
+        results[opt] = train_model(opt, device, seed=args.seed)
 
     # Persist raw results to disk BEFORE plotting, so the numbers can be
     # verified directly rather than only inspected visually in the figure.
-    with open("optimizer_ablation_results.json", "w") as f:
+    output_name = f"optimizer_ablation_results_seed{args.seed}.json"
+    with open(output_name, "w") as f:
         json.dump(results, f)
-    print("Raw results saved to optimizer_ablation_results.json")
+    print(f"Raw results saved to {output_name}")
         
     # Generate and save analytical figure for Appendix A
     plt.figure(figsize=(12, 8))
@@ -270,5 +276,5 @@ if __name__ == "__main__":
     plt.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig('optimizer_ablation_results.png', dpi=300)
-    print("\nTopological ablation successfully concluded. Analytical figure saved as 'optimizer_ablation_results.png'.")
+    plt.savefig(f'optimizer_ablation_results_seed{args.seed}.png', dpi=300)
+    print(f"\nTopological ablation successfully concluded. Analytical figure saved as 'optimizer_ablation_results_seed{args.seed}.png'.")
