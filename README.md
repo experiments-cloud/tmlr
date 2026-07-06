@@ -1,4 +1,4 @@
-# Beyond a Single Eigenvalue: A Multi-Seed Spectral Analysis of Grokking's Geometry
+# Spectral Dynamics of Delayed Algorithmic Generalization
 
 Code accompanying the paper on multi-seed replication of grokking's
 behavioral and geometric signatures, submitted to TMLR.
@@ -16,11 +16,19 @@ condition. This revision adds:
 3. **Stochastic Lanczos Quadrature (SLQ)**, a convergence-robust alternative
    to power iteration that additionally recovers the full eigenvalue density
    rather than a single scalar.
-4. **An instrumented optimizer ablation** that tracks the weight L2 norm
+4. **An instrumented, multi-seed optimizer ablation** that tracks the weight L2 norm
    alongside accuracy and lambda_max, identifying *why* Adam and SGD (both
    using coupled weight decay) behave near-identically: both collapse the
    weight norm by more than three orders of magnitude within the first
-   ~1,500 steps, regardless of the underlying update rule.
+   ~1,500 steps, regardless of the underlying update rule. Replicated across
+   all 4 seeds (`grokking_optimizer_ablation.py --seed <N>`); the qualitative
+   outcome and the collapse mechanism both reproduce with very low
+   seed-to-seed variance.
+5. **A noise-disentangling control** (`measure_intrinsic_noise.py --fixed_batch`)
+   isolating mini-batch sampling noise from power-iteration initialization
+   noise in the repeated-measurement diagnostic, showing that mini-batch
+   sampling is the dominant source of instability at most (though not all)
+   of the checkpoints examined.
 
 An earlier natural-language (TinyStories) validation experiment was removed
 from this revision after a data-loading bug was discovered; see
@@ -34,11 +42,11 @@ from this revision after a data-loading bug was discovered; see
 ├── model_architecture.py            # Small causal Transformer (~422K params)
 ├── train_and_grok.py                # Training loop (parameterized: --seed, --train_ratio, --weight_decay, --run_name)
 ├── hessian_topology.py              # lambda_max (power iteration) + Hutchinson trace, per checkpoint
-├── grokking_optimizer_ablation.py   # AdamW vs. Adam vs. SGD ablation (Appendix A), with weight-norm tracking
+├── grokking_optimizer_ablation.py   # AdamW vs. Adam vs. SGD ablation (Appendix A), with weight-norm tracking; --seed <N>, replicated across 4 seeds
 ├── visualize_paper.py               # Legacy single-run figure generator (original study)
 │
 ├── run_all_experiments.py           # Orchestrates the 12-run multi-seed training grid
-├── measure_intrinsic_noise.py       # Repeated power-iteration measurement on frozen checkpoints
+├── measure_intrinsic_noise.py       # Repeated power-iteration measurement on frozen checkpoints; --fixed_batch isolates init. vs. batch noise
 ├── spectral_density_slq.py          # Stochastic Lanczos Quadrature spectral density estimator
 ├── run_all_spectral_density.py      # Orchestrates the 36-checkpoint SLQ extraction grid
 ├── plot_spectral_density.py         # Exploratory spectral density visualization
