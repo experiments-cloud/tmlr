@@ -1,4 +1,4 @@
-# Spectral Dynamics of Delayed Algorithmic Generalization
+# Beyond a Single Eigenvalue: A Multi-Seed Spectral Analysis of Grokking's Geometry
 
 Code accompanying the paper on multi-seed replication of grokking's
 behavioral and geometric signatures, submitted to TMLR.
