@@ -51,7 +51,6 @@ condition. This revision adds:
 │   ├── generate_figure1_accuracy.py
 │   ├── generate_figure2_measurement_noise.py
 │   ├── generate_figure3_lambda_slq_distribution.py
-│   ├── generate_figure4_spectral_density_grid.py
 │   └── generate_figureA1_optimizer_ablation.py
 │
 ├── requirements.txt
