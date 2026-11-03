@@ -73,7 +73,7 @@ def main():
 
         acc_matrix = np.array([data[ratio][s]["val_accuracy"] for s in seeds])  # shape (4, n_steps)
         acc_mean = acc_matrix.mean(axis=0)
-        acc_std = acc_matrix.std(axis=0)
+        acc_std = acc_matrix.std(axis=0, ddof=1)
 
         ax.plot(ref_steps, acc_mean, color=colors[ratio], label=labels[ratio], linewidth=1.8)
         ax.fill_between(ref_steps, acc_mean - acc_std, acc_mean + acc_std,

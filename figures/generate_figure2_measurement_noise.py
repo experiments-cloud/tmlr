@@ -100,7 +100,7 @@ def main():
         ax.scatter(np.full_like(vals, pos) + jitter, vals, color=color, alpha=alpha, s=32, zorder=3)
         ax.hlines(vals.mean(), pos - 0.2, pos + 0.2, color="black", linewidth=1.5, zorder=4)
 
-        cv = 100 * vals.std() / vals.mean() if vals.mean() != 0 else float("nan")
+        cv = 100 * vals.std(ddof=1) / vals.mean() if vals.mean() != 0 else float("nan")
         ax.text(pos, vals.max() + 0.05 * (vals.max() - vals.min() + 1), f"CV={cv:.0f}%",
                 ha="center", fontsize=8)
 

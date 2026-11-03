@@ -60,9 +60,9 @@ def main():
         lmax_matrix = np.array([r[opt]["lambda_max"] for r in all_results])
         norm_matrix = np.array([r[opt]["weight_l2_norm"] for r in all_results])
 
-        acc_mean, acc_std = acc_matrix.mean(axis=0), acc_matrix.std(axis=0)
-        lmax_mean, lmax_std = lmax_matrix.mean(axis=0), lmax_matrix.std(axis=0)
-        norm_mean, norm_std = norm_matrix.mean(axis=0), norm_matrix.std(axis=0)
+        acc_mean, acc_std = acc_matrix.mean(axis=0), acc_matrix.std(axis=0, ddof=1)
+        lmax_mean, lmax_std = lmax_matrix.mean(axis=0), lmax_matrix.std(axis=0, ddof=1)
+        norm_mean, norm_std = norm_matrix.mean(axis=0), norm_matrix.std(axis=0, ddof=1)
 
         ax1.plot(ref_steps, acc_mean, label=opt, color=colors[opt], linestyle=linestyles[opt], linewidth=1.8)
         ax1.fill_between(ref_steps, acc_mean - acc_std, acc_mean + acc_std, color=colors[opt], alpha=0.2, linewidth=0)
