@@ -2,13 +2,6 @@
 
 The files below were added for the revision.
 
-## Exact objective measured by all Hessian computations
-- **Loss:** mean cross-entropy of the logits at the **final input position** ("=") against the answer token `c`. The other shifted targets returned by the data loader are not used. The same objective is used for training, accuracy and every Hessian.
-- **Mode:** `model.eval()` (dropout off); training uses dropout 0.1.
-- **Regularization:** the weight-decay term is not included in the measured Hessian.
-- **Batches:** 512 training examples.
-- **Attention:** unfused (MATH) kernels.
-
 ## New experiments
 | Script | Section | Description |
 |---|---|---|
