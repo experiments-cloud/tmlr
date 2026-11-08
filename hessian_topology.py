@@ -2,7 +2,7 @@
 hessian_topology.py
 
 Calculates the dominant eigenvalue (lambda_max) of the Hessian matrix 
-for saved optimization states to mathematically prove geometric compression 
+for saved optimization states, as a scalar summary of local curvature 
 during delayed algorithmic generalization. Utilizes Power Iteration and 
 Hessian-Vector Products (HVP) to strictly bound spatial complexity to O(N), 
 bypassing intractable O(N^2) or O(N^3) memory constraints.
@@ -95,9 +95,9 @@ def estimate_hessian_trace(model: nn.Module,
     lambda_max. Provides a second, complementary spectral scalar: while lambda_max
     captures the single steepest direction of curvature, tr(H) = sum of ALL
     eigenvalues, i.e. the aggregate/average directional curvature across the
-    entire parameter space. This directly addresses the critique that a single
-    dominant eigenvalue is an overly reductive characterization of the Hessian
-    spectrum (Reviewers #2, #3, #5).
+    entire parameter space. A single dominant eigenvalue is a reductive
+    characterization of the Hessian spectrum, so the trace is computed as a
+    complementary scalar.
 
     Note: this is still not the full eigenvalue density/spectrum a Lanczos-based
     method (e.g. stochastic Lanczos quadrature) would give -- it is a cheap,
