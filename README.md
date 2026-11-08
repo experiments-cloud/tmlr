@@ -13,9 +13,10 @@ condition. This revision adds:
 2. **A diagnostic protocol** isolating measurement noise (power-iteration
    initialization and mini-batch sampling) from genuine variation across
    trained models.
-3. **Stochastic Lanczos Quadrature (SLQ)**, a convergence-robust alternative
-   to power iteration that additionally recovers the full eigenvalue density
-   rather than a single scalar.
+3. **Stochastic Lanczos Quadrature (SLQ)**, an estimator that provides a
+   convergence check on a fixed batch (it does not reduce mini-batch sampling
+   variability) and additionally recovers the full eigenvalue density rather
+   than a single scalar.
 4. **An instrumented, multi-seed optimizer ablation** that tracks the weight L2 norm
    alongside accuracy and lambda_max, identifying *why* Adam and SGD (both
    using coupled weight decay) behave near-identically: both collapse the
