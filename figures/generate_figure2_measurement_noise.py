@@ -106,18 +106,18 @@ def main():
 
         x_positions.append(pos)
         if r["fixed_batch"]:
-            cond_tag = "fixed batch, 20it"
+            cond_tag = "fixed batch,\n20 it."
         else:
-            cond_tag = f"{r['n_iter']}it, fresh batch"
-        x_labels.append(f"{int(r['ratio']*100)}%\nstep {r['step']}\n({cond_tag})")
+            cond_tag = f"{r['n_iter']} it.,\nfresh batch"
+        x_labels.append(f"{int(r['ratio']*100)}%\nstep {r['step']}\n{cond_tag}")
         pos += 1
 
     ax.set_xticks(x_positions)
     ax.set_xticklabels(x_labels, fontsize=7.5)
     ax.set_ylabel(r"$\lambda_{max}$ (10 repeated measurements, frozen weights)")
     ax.set_title("Repeated power-iteration measurements on fixed checkpoints:\n"
-                  "fresh batch (20 / 100 it.) vs. fixed batch (20 it.), highlighting the\n"
-                  "resolved case (10% / step 2000) and the persistent bimodal case (10% / step 24500)")
+                  "fresh batch (20 / 100 it.) vs. fixed batch (20 it.), highlighting the under-converged\n"
+                  "case (10% / step 2000) and the persistent bimodal case (10% / step 24500)")
     fig.tight_layout()
     fig.savefig(args.output, dpi=300, bbox_inches="tight")
     fig.savefig(args.output.replace(".png", ".pdf"), bbox_inches="tight")
