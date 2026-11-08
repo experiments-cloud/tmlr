@@ -7,11 +7,9 @@ the same class of method used by PyHessian (Yao et al., 2020, cited in the
 paper) and by Ghorbani et al. (2019), "An Investigation into Neural Net
 Optimization via Hessian Eigenvalue Density".
 
-Why this matters for the paper: reviewers #2/#3/#5 all raised the same
-critique -- that tracking a single scalar (lambda_max) is an overly reductive
-characterization of the Hessian spectrum. This script directly answers that
-critique with the full eigenvalue density (or a close, standard approximation
-of it), reusing the exact same HVP machinery already validated for lambda_max
+Purpose: tracking a single scalar (lambda_max) is a reductive
+characterization of the Hessian spectrum. This script estimates the full
+eigenvalue density (or a close, standard approximation of it), reusing the exact same HVP machinery already validated for lambda_max
 and the Hutchinson trace, at a modest additional computational cost.
 
 Method (matrix-free Lanczos + Gauss quadrature, Golub & Meurant framework):
