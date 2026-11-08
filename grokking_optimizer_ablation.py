@@ -1,11 +1,11 @@
 """
 grokking_optimizer_ablation.py
 
-Executes a topological ablation study comparing the decoupled AdamW operator 
-against standard coupled optimizers (Adam, SGD). Evaluates the continuous 
-macroscopic and spectral dynamics to analytically demonstrate that the geometric 
-pressure from decoupled weight decay is a strictly necessary boundary condition 
-to traverse the topological barrier and induce algorithmic consolidation.
+Runs an ablation comparing the decoupled AdamW operator against coupled
+optimizers (Adam, SGD) in a single setting (lr 1e-3, weight decay 1.0), and
+tracks accuracy, the weight L2 norm and the spectral dynamics. In that setting
+only AdamW generalizes; the script does not establish that decoupled weight
+decay is necessary beyond it.
 """
 
 import torch
