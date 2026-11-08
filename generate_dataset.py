@@ -24,7 +24,7 @@ class ModularArithmeticDataset(Dataset):
         Initializes the dataset and performs deterministic orthogonal structural partitions.
 
         =====================================================================
-        🔬 TOPOLOGICAL ABLATION STUDY CONFIGURATION (Ref: Section 5.3)
+        TOPOLOGICAL ABLATION STUDY CONFIGURATION (Ref: Section 5.3)
         =====================================================================
         Modify the 'train_ratio' parameter to analytically reproduce the structural 
         boundary limits of algorithmic consolidation:
@@ -32,8 +32,8 @@ class ModularArithmeticDataset(Dataset):
         * train_ratio = 0.50 (Base) -> Relative abundance. Rapid algorithmic consolidation.
         * train_ratio = 0.25 (Grok) -> Moderate data scarcity. Induces standard delayed 
                                        algorithmic generalization.
-        * train_ratio = 0.10 (Fail) -> Severe data scarcity. Architecture remains trapped 
-                                       in a high-curvature, uncompressed minimum.
+        * train_ratio = 0.10 (Fail) -> Severe data scarcity. Generalization did not occur within
+                                       the 25,000 steps tested.
         =====================================================================
 
         Args:
