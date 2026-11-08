@@ -7,7 +7,7 @@ empirical Hessians, at one frozen checkpoint.
 Objective measured (identical to hessian_topology.py / spectral_density_slq.py of the repo):
   * loss  = mean cross-entropy of the FINAL position only: CE(logits[:, -1, :], y[:, -1])
   * model.eval()  (dropout disabled), unfused (MATH) attention for the forward pass
-  * no weight-decay/L2 term in the loss whose Hessian is measured
+  * no weight-decay / L2 term in the loss whose Hessian is measured
   * batches of 512 training examples (BATCH_SIZE in hessian_topology.py)
 
 Design, per checkpoint:

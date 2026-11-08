@@ -29,8 +29,9 @@ from torch.utils.data import DataLoader
 from generate_dataset import ModularArithmeticDataset
 from model_architecture import ToyTransformer
 
-
-# MACROSCOPIC HYPERPARAMETER CONFIGURATION & TOPOLOGICAL ABLATION
+# =====================================================================
+# 🔬 MACROSCOPIC HYPERPARAMETER CONFIGURATION & TOPOLOGICAL ABLATION
+# =====================================================================
 parser = argparse.ArgumentParser(description="Train ToyTransformer on modular addition and track grokking telemetry.")
 parser.add_argument("--seed", type=int, default=42, help="Random seed for dataset split, init, and shuffling.")
 parser.add_argument("--train_ratio", type=float, default=0.5, help="Fraction of the total data manifold used for training (0.5 / 0.25 / 0.10).")
@@ -131,7 +132,8 @@ def train_model() -> None:
         optimizer.zero_grad()
         logits = model(x_batch)
         
-        # We exclusively evaluate the predictive probability distribution on the final sequence token (the true mapping 'c') logits shape: (batch_size, seq_len, vocab_size)
+        # We exclusively evaluate the predictive probability distribution on the final sequence token (the true mapping 'c')
+        # logits shape: (batch_size, seq_len, vocab_size)
         final_logits = logits[:, -1, :]
         final_targets = y_batch[:, -1]
         
@@ -141,7 +143,7 @@ def train_model() -> None:
         loss.backward()
         optimizer.step()
         
-        # Structural Evaluation and Macroscopic Telemetry Logging ---
+        # --- Structural Evaluation and Macroscopic Telemetry Logging ---
         if step % EVAL_EVERY == 0:
             model.eval()
             val_loss_total = 0.0
@@ -195,7 +197,7 @@ def train_model() -> None:
             
         step += 1
 
-    # 6. Persist(include run metadata for downstream aggregation)
+    # 6. Persist final telemetry to disk (include run metadata for downstream aggregation)
     telemetry["run_name"] = RUN_NAME
     telemetry["seed"] = SEED
     telemetry["train_ratio"] = TRAIN_RATIO
@@ -205,7 +207,7 @@ def train_model() -> None:
     with open(TELEMETRY_FILE, "w") as f:
         json.dump(telemetry, f)
 
-    print(f"\nMacroscopic telemetry successfully saved to '{TELEMETRY_FILE}'.")
+    print(f"\nAsymptotic optimization concluded! Macroscopic telemetry successfully saved to '{TELEMETRY_FILE}'.")
 
 
 if __name__ == "__main__":
